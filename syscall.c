@@ -101,6 +101,8 @@ extern int sys_uptime(void);
 extern int sys_enable_sched_trace(void);
 extern int sys_shutdown(void);
 
+//extern int sys_xvsh(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -126,6 +128,8 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_enable_sched_trace]   sys_enable_sched_trace,
 [SYS_shutdown]   sys_shutdown,
+//[SYS_xvsh]   sys_xvsh
+
 
 };
 

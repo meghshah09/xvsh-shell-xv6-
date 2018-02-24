@@ -13,6 +13,7 @@
 
 #define MAXARGS 10
 
+int cnt =0;
 struct cmd {
   int type;
 };
@@ -76,8 +77,11 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit();
-    exec(ecmd->argv[0], ecmd->argv);
-    printf(2, "exec %s failed\n", ecmd->argv[0]);
+
+    	exec(ecmd->argv[0], ecmd->argv);
+  	
+    	printf(2, "Cannot run this command %s\n", ecmd->argv[0]);
+    
     break;
 
   case REDIR:
@@ -134,11 +138,12 @@ runcmd(struct cmd *cmd)
 int
 getcmd(char *buf, int nbuf)
 {
-  printf(2, "$ ");
+  printf(2, "xvsh> ");
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
-  if(buf[0] == 0) // EOF
+  if(buf[0] == 0 ) // EOF
     return -1;
+
   return 0;
 }
 
@@ -158,16 +163,16 @@ main(void)
   
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-    if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
-      // Clumsy but will have to do for now.
-      // Chdir has no effect on the parent if run in the child.
-      buf[strlen(buf)-1] = 0;  // chop \n
-      if(chdir(buf+3) < 0)
-        printf(2, "cannot cd %s\n", buf+3);
-      continue;
+   if(buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't' && buf[4] == '\n'){
+      buf[strlen(buf)-1] = 0;
+      	exit();
     }
-    if(fork1() == 0)
+    if(fork1() == 0){
+
       runcmd(parsecmd(buf));
+    }
+    		
+    
     wait();
   }
   exit();
@@ -284,6 +289,7 @@ gettoken(char **ps, char *es, char **q, char **eq)
   case ')':
   case ';':
   case '&':
+  		printf(1,"[PID %d] runs as a background process\n",getpid());
   case '<':
     s++;
     break;
@@ -335,11 +341,14 @@ parsecmd(char *s)
   es = s + strlen(s);
   cmd = parseline(&s, es);
   peek(&s, es, "");
+
   if(s != es){
     printf(2, "leftovers: %s\n", s);
     panic("syntax");
   }
+
   nulterminate(cmd);
+  //printf(1,"I am here\n");
   return cmd;
 }
 
@@ -430,7 +439,9 @@ parseexec(char **ps, char *es)
 
   argc = 0;
   ret = parseredirs(ret, ps, es);
+
   while(!peek(ps, es, "|)&;")){
+
     if((tok=gettoken(ps, es, &q, &eq)) == 0)
       break;
     if(tok != 'a')

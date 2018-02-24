@@ -173,6 +173,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_shutdown \
+	_xvsh \
+	_sleep-echo \
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
