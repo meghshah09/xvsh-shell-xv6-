@@ -10,7 +10,9 @@ main(int argc, char *argv[])
 
   for(i = 1; i < argc; i++){
   		sleep(500);
+
     	printf(1, "%s%s", argv[i], i+1 < argc ? " " : "\n");
+    	
 	}
 
 		exit();		
