@@ -1,13 +1,17 @@
+
+/*------------------------- Header Files --------------------------*/
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
-
+/*--------------------- MACROS -----------------------*/
 #define EXEC  1
 #define BACK  5
 
 #define MAXARGS 10
-
+/*------------------------------- Global Variables and function declarations -----------------------*/
 int found=-1;
+char whitespace[] = " \t\r\n\v";
+char symbols[] = "<|>&;()";
 struct cmd {
   int type;
 };
@@ -27,9 +31,13 @@ struct backcmd {
 int fork1(void);
 void panic(char*);
 struct cmd *parsecmd(char*);
+struct cmd *parseline(char**, char*);
+struct cmd *parseexechelper(char**, char*);
+struct cmd *parseexec(char**, char*);
+struct cmd *nulterminate(struct cmd*);
 
-void
-runcmd(struct cmd *cmd)
+/*---------------------------------------- RUNCMD ---------------------------------*/
+void runcmd(struct cmd *cmd)
 {
   int wpid;
   struct backcmd *bcmd;
@@ -73,12 +81,11 @@ runcmd(struct cmd *cmd)
 	exit();
 }
 
-int
-getcmd(char *buf, int nbuf)
+/*-------------------------------- Gets the user Input --------------------------------*/
+int getcmd(char *buf, int nbuf)
 {	
-
-
-  printf(2, "xvsh> ");
+										
+  printf(1, "xvsh> ");
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0 ) // EOF
@@ -87,10 +94,10 @@ getcmd(char *buf, int nbuf)
   return 0;
 }
 
-int
-main(void)
+/*-------------------------- MAIN METHOD------------------*/
+int main(void)
 {
-	/*printf(1,"[PID %d] runs as a background process\n",getpid());*/
+	/**/
   static char buf[100];
   //int pid;
 	//int f=-1;
@@ -104,25 +111,27 @@ main(void)
 	found=-1;
 	if(buf[0]=='\n')continue;
 		for(int i=0;i<strlen(buf);i++){
-		if(buf[i]=='&'){
-			found=0;
-			break;
+			if(buf[i]=='&'){
+				found=0;
+				break;
+			}
 		}
-	}
-	int pid= fork1();
+	//int pid= fork1();
 
 	if(found==0){
 		//f=-1;
+		int pid= fork1();
 		if(pid==0){
-			
+				
 			runcmd(parsecmd(buf));
 		}
-		
+		printf(1,"[PID %d] runs as a background process\n",getpid());
 		continue;
 	}
 	else{
 	// when "&" is not found.
 		//while(wait()>0){continue;}
+		int pid= fork1();
 		if(pid==0){
 			runcmd(parsecmd(buf));
 		}
@@ -133,16 +142,14 @@ main(void)
   //printf(1,"Main Exit\n");
 	exit();
 }
-
-void
-panic(char *s)
+/*---------------------------------- UTIL FUNCTION----------------------*/
+void panic(char *s)
 {
   printf(2, "%s\n", s);
   exit();
 }
 
-int
-fork1(void)
+int fork1(void)
 {
   int pid;
   
@@ -152,8 +159,7 @@ fork1(void)
   return pid;
 }
 
-struct cmd*
-execcmd(void)
+struct cmd* execcmd(void)
 {
   struct execcmd *cmd;
 
@@ -163,8 +169,7 @@ execcmd(void)
   return (struct cmd*)cmd;
 }
 
-struct cmd*
-backcmd(struct cmd *subcmd)
+struct cmd* backcmd(struct cmd *subcmd)
 {
   struct backcmd *cmd;
 
@@ -175,11 +180,9 @@ backcmd(struct cmd *subcmd)
   return (struct cmd*)cmd;
 }
 
-char whitespace[] = " \t\r\n\v";
-char symbols[] = "<|>&;()";
+/*------------------------------------- TOKENIZING -------------------------------*/
 
-int
-gettoken(char **ps, char *es, char **q, char **eq)
+int gettoken(char **ps, char *es, char **q, char **eq)
 {
   char *s;
   int ret;
@@ -224,8 +227,8 @@ gettoken(char **ps, char *es, char **q, char **eq)
   return ret;
 }
 
-int
-peek(char **ps, char *es, char *toks)
+/*-------------------------------- Function for seeing inside the string -------------*/
+int peek(char **ps, char *es, char *toks)
 {
   char *s;
   
@@ -236,13 +239,10 @@ peek(char **ps, char *es, char *toks)
   return *s && strchr(toks, *s);
 }
 
-struct cmd *parseline(char**, char*);
-struct cmd *parsepipe(char**, char*);
-struct cmd *parseexec(char**, char*);
-struct cmd *nulterminate(struct cmd*);
 
-struct cmd*
-parsecmd(char *s)
+/*------------------- PARSING the string given by the user -----------------*/
+
+struct cmd* parsecmd(char *s)
 {
   char *es;
   struct cmd *cmd;
@@ -255,14 +255,13 @@ parsecmd(char *s)
   return cmd;
 }
 
-struct cmd*
-parseline(char **ps, char *es)
+struct cmd* parseline(char **ps, char *es)
 {
   struct cmd *cmd;
 	//printf(1,"Before\n");
 	//printf(1,"PS:%s\n",ps[0]);
   //printf(1,"ES:%s\n",es);
-  cmd = parsepipe(ps, es);
+  cmd = parseexechelper(ps, es);
   //printf(1,"After\n");
   //printf(1,"PS:%s\n",ps[0]);
   //printf(1,"ES:%s\n",es);
@@ -278,8 +277,7 @@ parseline(char **ps, char *es)
   return cmd;
 }
 
-struct cmd*
-parsepipe(char **ps, char *es)
+struct cmd* parseexechelper(char **ps, char *es)
 {
   struct cmd *cmd;
 
@@ -288,8 +286,7 @@ parsepipe(char **ps, char *es)
   return cmd;
 }
 
-struct cmd*
-parseexec(char **ps, char *es)
+struct cmd* parseexec(char **ps, char *es)
 {
   char *q, *eq;
   int tok, argc;
@@ -319,9 +316,8 @@ parseexec(char **ps, char *es)
   return ret;
 }
 
-// NUL-terminate all the counted strings.
-struct cmd*
-nulterminate(struct cmd *cmd)
+/*-----------------------------------NUL-terminate all the counted strings----------------------*/
+struct cmd* nulterminate(struct cmd *cmd)
 {
   int i;
   struct backcmd *bcmd;
