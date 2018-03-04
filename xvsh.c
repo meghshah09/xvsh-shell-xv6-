@@ -1,16 +1,13 @@
-// Shell.
-
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
 
-// Parsed command representation
 #define EXEC  1
 #define BACK  5
 
 #define MAXARGS 10
 
-
+int found=-1;
 struct cmd {
   int type;
 };
@@ -27,11 +24,10 @@ struct backcmd {
   struct cmd *cmd;
 };
 
-int fork1(void);  // Fork but panics on failure.
+int fork1(void);
 void panic(char*);
 struct cmd *parsecmd(char*);
 
-// Execute cmd.  Never returns.
 void
 runcmd(struct cmd *cmd)
 {
@@ -62,65 +58,66 @@ runcmd(struct cmd *cmd)
   
   case BACK:
 	bcmd = (struct backcmd*)cmd;
+	
 	//printf(1,"I was in BACK\n");
 	wpid = fork();
     if(wpid==0){
-		//while ((wpid = wait()) >0){exit();}
 		runcmd(bcmd->cmd);
-		//while ((wpid = wait()) >0){}
 	}
-		//flag=0;
-		//exec("xvsh",0);
 	wait();
-		//exit();
-		//
-	//if((wpid=wait())>0){exit();};
+		
     break;
   }
   
    //printf(1,"runCMD Exit\n");
 	exit();
-	//wait();
 }
 
 int
 getcmd(char *buf, int nbuf)
-{
+{	
+
+
   printf(2, "xvsh> ");
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0 ) // EOF
     return -1;
-
+	
   return 0;
 }
 
 int
 main(void)
 {
+	/*printf(1,"[PID %d] runs as a background process\n",getpid());*/
   static char buf[100];
   //int pid;
-	int f=-1;
+	//int f=-1;
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
    if(buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't' && buf[4] == '\n'){
       buf[strlen(buf)-1] = 0;
+		while(wait()>0){}
       	exit();
     }
-	f=-1;
+	found=-1;
 	if(buf[0]=='\n')continue;
-	for(int i=0;i<strlen(buf);i++){
+		for(int i=0;i<strlen(buf);i++){
 		if(buf[i]=='&'){
-			f=0;
+			found=0;
 			break;
 		}
 	}
-	int pid= fork();
-	if(f==0){
-		f=-1;
+	int pid= fork1();
+
+	if(found==0){
+		//f=-1;
 		if(pid==0){
+			
 			runcmd(parsecmd(buf));
 		}
+		
 		continue;
 	}
 	else{
@@ -129,12 +126,11 @@ main(void)
 		if(pid==0){
 			runcmd(parsecmd(buf));
 		}
-		wait();
-		wait();
+		while(wait()>0){}
 	}
 	
   }
-  printf(1,"Main Exit\n");
+  //printf(1,"Main Exit\n");
 	exit();
 }
 
@@ -178,8 +174,6 @@ backcmd(struct cmd *subcmd)
   cmd->cmd = subcmd;
   return (struct cmd*)cmd;
 }
-//PAGEBREAK!
-// Parsing
 
 char whitespace[] = " \t\r\n\v";
 char symbols[] = "<|>&;()";
@@ -204,7 +198,7 @@ gettoken(char **ps, char *es, char **q, char **eq)
   case ')':
   case ';':
   case '&':
-  		printf(1,"[PID %d] runs as a background process\n",getpid());
+		
   case '<':
     s++;
     break;
@@ -311,15 +305,11 @@ parseexec(char **ps, char *es)
 	//printf(1,"I am Parsinf\n");
     if((tok=gettoken(ps, es, &q, &eq)) == 0)
       break;
-
-	
-	//if(*q != '&'){
 		
 		cmd->argv[argc] = q;
 		//printf(1,"String:%s",cmd->argv[argc]);
 		cmd->eargv[argc] = eq;
 		argc++;
-	//}
 
     if(argc >= MAXARGS)
       panic("too many args");
