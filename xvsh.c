@@ -48,11 +48,12 @@ runcmd(struct cmd *cmd)
     panic("runcmd");
 
   case EXEC:
+	//flag=-1;
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit();
   
-		printf(1,"I was in EXEC\n");
+		//printf(1,"I was in EXEC\n");
 		//if(fork()==0)
 			exec(ecmd->argv[0], ecmd->argv);
     	printf(2, "Cannot run this command %s\n", ecmd->argv[0]);
@@ -61,22 +62,24 @@ runcmd(struct cmd *cmd)
   
   case BACK:
 	bcmd = (struct backcmd*)cmd;
-	printf(1,"I was in BACK\n");
+	//printf(1,"I was in BACK\n");
 	wpid = fork();
     if(wpid==0){
 		//while ((wpid = wait()) >0){exit();}
 		runcmd(bcmd->cmd);
 		//while ((wpid = wait()) >0){}
 	}
+		//flag=0;
 		//exec("xvsh",0);
-
+	wait();
 		//exit();
 		//
-	if((wpid=wait())>0){exit();};
+	//if((wpid=wait())>0){exit();};
     break;
   }
+  
    //printf(1,"runCMD Exit\n");
-	//exit();
+	exit();
 	//wait();
 }
 
@@ -96,43 +99,41 @@ int
 main(void)
 {
   static char buf[100];
-  //int wpid;
-	//int f=-1;
+  //int pid;
+	int f=-1;
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
    if(buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't' && buf[4] == '\n'){
       buf[strlen(buf)-1] = 0;
       	exit();
     }
-	/*f=-1;
+	f=-1;
+	if(buf[0]=='\n')continue;
 	for(int i=0;i<strlen(buf);i++){
 		if(buf[i]=='&'){
 			f=0;
 			break;
 		}
 	}
-	
+	int pid= fork();
 	if(f==0){
-		if(fork1() == 0){
-
+		f=-1;
+		if(pid==0){
 			runcmd(parsecmd(buf));
-			if((wpid = wait())>0){exit();f=-1;}
 		}
-		//wait();
-		//exit();
+		continue;
 	}
-	else{*/
-		if(fork1() == 0){
-
+	else{
+	// when "&" is not found.
+		//while(wait()>0){continue;}
+		if(pid==0){
 			runcmd(parsecmd(buf));
-		
 		}
-	wait();
+		wait();
+		wait();
+	}
 	
-	//printf(1,"Main wait\n");
-	//wait();
-	//while ((wpid = wait()) >0){}
-	}
+  }
   printf(1,"Main Exit\n");
 	exit();
 }
