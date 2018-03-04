@@ -125,7 +125,7 @@ int main(void)
 				
 			runcmd(parsecmd(buf));
 		}
-		printf(1,"[PID %d] runs as a background process\n",getpid());
+		printf(1,"[PID %d] runs as a background process\n",pid);
 		continue;
 	}
 	else{
