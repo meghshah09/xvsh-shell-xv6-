@@ -1,3 +1,11 @@
+
+1) Implemented Shutdown User Pogram.
+2) Implemented xvsh(shell) inside xv6 which also support "&" and makes the process to run in background.
+3) Also supports inbuild xv6 command exit inside the newly build shell.
+(FOR DETAILED DESCRIPTION About this PROJECT please refer "shell_description.pdf") 
+
+
+
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,
 but is implemented for a modern x86-based multiprocessor using ANSI C.
